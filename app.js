@@ -14,7 +14,7 @@ const userRoutes = require("./routes/user");
 // Mongoose est une bibliothèque permettant d'utiliser MongoDB avec Node.js.
 mongoose
 	.connect(
-		`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_CLUSTER}.mongodb.net/?retryWrites=true&w=majority`,
+		`mongodb+srv://GDouv:hdaCcSYzYAaAsXJq@cluster0.ci9l7m.mongodb.net/?retryWrites=true&w=majority`,
 		{ useNewUrlParser: true, useUnifiedTopology: true }
 	)
 	.then(() => console.log("Connexion à MongoDB réussie !"))
