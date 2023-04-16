@@ -16,8 +16,8 @@ exports.createSauce = (req, res) => {
 		}`,
 	});
 
-	sauce.save();
 	try {
+		sauce.save();
 		res.status(201).json({ message: "Objet enregistré !" });
 	} catch (err) {
 		res.status(400).json({ err });
@@ -27,6 +27,10 @@ exports.createSauce = (req, res) => {
 // ES7
 exports.modifySauce = async (req, res) => {
 	try {
+		/* let sauceObject = req.body.sauce
+		 if (sauceObject !== undefined) {
+			CODE ICI
+		} */
 		const sauceObject = req.file
 			? {
 					...JSON.parse(req.body.sauce),
@@ -69,7 +73,10 @@ exports.likeSauce = async (req, res) => {
 		const sauce = await Sauce.findById(req.params.id).exec();
 		switch (req.body.like) {
 			case 1:
-				if (!sauce.usersLiked.includes(req.body.userId)) {
+				if (
+					!sauce.usersLiked.includes(req.body.userId) &&
+					!sauce.usersDisliked.includes(req.body.userId)
+				) {
 					try {
 						await Sauce.findByIdAndUpdate(req.params.id, {
 							$inc: { likes: 1 },
@@ -79,10 +86,17 @@ exports.likeSauce = async (req, res) => {
 					} catch (err) {
 						res.status(400).json({ err });
 					}
+				} else {
+					res.status(400).json({
+						message: "Impossible de liker la sauce !",
+					});
 				}
 				break;
 			case -1:
-				if (!sauce.usersDisliked.includes(req.body.userId)) {
+				if (
+					!sauce.usersDisliked.includes(req.body.userId) &&
+					!sauce.usersLiked.includes(req.body.userId)
+				) {
 					try {
 						await Sauce.findByIdAndUpdate(req.params.id, {
 							$inc: { dislikes: 1 },
@@ -92,6 +106,10 @@ exports.likeSauce = async (req, res) => {
 					} catch (err) {
 						res.status(400).json({ err });
 					}
+				} else {
+					res.status(400).json({
+						message: "Impossible de disliker la sauce !",
+					});
 				}
 				break;
 			case 0:
@@ -115,6 +133,10 @@ exports.likeSauce = async (req, res) => {
 					} catch (err) {
 						res.status(400).json({ err });
 					}
+				} else {
+					res.status(400).json({
+						message: "Pas de like ou dislike à supprimer !",
+					});
 				}
 				break;
 			default:
@@ -163,7 +185,7 @@ exports.getOneSauce = async (req, res) => {
 exports.getAllSauces = async (req, res) => {
 	try {
 		const sauces = await Sauce.find({})
-			.select("imageUrl name heat mainPepper") // .select permet de ne charger que les propriétés précisées, ou inversement de ne pas charger "-propriété" (avec un - devant)
+			//.select("imageUrl name heat mainPepper") // .select permet de ne charger que les propriétés précisées, ou inversement de ne pas charger "-propriété" (avec un - devant)
 			.exec();
 		res.status(200).json(sauces);
 	} catch (err) {
