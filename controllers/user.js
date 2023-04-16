@@ -33,6 +33,11 @@ exports.login = (req, res, next) => {
 		.HmacSHA256(req.body.email, process.env.CRYPTOJS_EMAIL)
 		.toString();
 
+	let decrypted = cryptoJS
+		.HmacSHA256(emailCryptoJS, process.env.CRYPTOJS_EMAIL)
+		.toString();
+	console.log(decrypted);
+
 	User.findOne({ email: emailCryptoJS })
 		.then((user) => {
 			if (!user) {
