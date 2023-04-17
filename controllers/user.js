@@ -6,15 +6,19 @@ const User = require("../models/User");
 
 exports.signup = (req, res, next) => {
 	//chiffrement de l'email avant de l'envoyer dans la base de données
-	const emailCryptoJS = cryptoJS
-		.HmacSHA256(req.body.email, process.env.CRYPTOJS_EMAIL)
-		.toString();
+	const emailCryptoJS = cryptoJS.AES.encrypt(
+		req.body.email,
+		process.env.CRYPTOJS_EMAIL
+	).toString();
 
 	bcrypt
 		.hash(req.body.password, 10)
 		.then((hash) => {
 			const user = new User({
-				email: emailCryptoJS,
+				email: cryptoJS.AES.decrypt(
+					emailCryptoJS,
+					process.env.CRYPTOJS_EMAIL
+				).toString(),
 				password: hash,
 			});
 			user.save()
@@ -29,16 +33,17 @@ exports.signup = (req, res, next) => {
 exports.login = (req, res, next) => {
 	//chiffrement de l'email entré par l'utilisateur pour comparer le SHA avant la connexion
 	// Utiliser AES pour crypter l'email car c'est symétrique
-	const emailCryptoJS = cryptoJS
-		.HmacSHA256(req.body.email, process.env.CRYPTOJS_EMAIL)
-		.toString();
+	const emailCryptoJS = cryptoJS.AES.encrypt(
+		req.body.email,
+		process.env.CRYPTOJS_EMAIL
+	).toString();
 
-	// let decrypted = cryptoJS
-	// 	.HmacSHA256(emailCryptoJS, process.env.CRYPTOJS_EMAIL)
-	// 	.toString();
-	// console.log(decrypted);
-
-	User.findOne({ email: emailCryptoJS })
+	User.findOne({
+		email: cryptoJS.AES.decrypt(
+			emailCryptoJS,
+			process.env.CRYPTOJS_EMAIL
+		).toString(),
+	})
 		.then((user) => {
 			if (!user) {
 				return res.status(401).json({
