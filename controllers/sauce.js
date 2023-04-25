@@ -1,14 +1,36 @@
 const Sauce = require("../models/Sauce");
 const fs = require("fs");
 
+exports.getOneSauce = async (req, res) => {
+	try {
+		// Appeler une query sans exec() ni une callback renverrai un thenable et pas une promise.
+		const sauce = await Sauce.findById(req.params.id).exec();
+		res.status(200).json(sauce);
+	} catch (err) {
+		res.status(404).json({ err });
+	}
+};
+
+exports.getAllSauces = async (req, res) => {
+	try {
+		const sauces = await Sauce.find({}).exec();
+		res.status(200).json(sauces);
+	} catch (err) {
+		res.status(404).json({ err });
+	}
+};
+
 exports.createSauce = (req, res) => {
 	const sauceInput = JSON.parse(req.body.sauce);
+	// Suppression de l'id de la requête (un id est généré automatiquement par MongoDB)
 	delete sauceInput._id;
+	// Supporession de l'userId de la requête (on utilise req.auth.userId)
 	delete sauceInput._userId;
 	const sauce = new Sauce({
 		...sauceInput,
 		userId: req.auth.userId,
-		// req.protocol récupère le protocole "http" ou "https" et req.get("host") récupère le début de l'URL ("localhost:4200" par exemple);
+		/* req.protocol récupère le protocole "http" ou "https" et req.get("host")
+		récupère le début de l'URL ("localhost:4200" par exemple); */
 		imageUrl: `${req.protocol}://${req.get("host")}/images/${
 			req.file.filename
 		}`,
@@ -16,19 +38,16 @@ exports.createSauce = (req, res) => {
 
 	try {
 		sauce.save();
-		res.status(201).json({ message: "Objet enregistré !" });
+		res.status(201).json({
+			message: `La sauce : ${sauce.name} ayant pour id ${sauce._id} a bien été créée !`,
+		});
 	} catch (err) {
 		res.status(400).json({ err });
 	}
 };
 
-// ES7
 exports.modifySauce = async (req, res) => {
 	try {
-		/* let sauceObject = req.body.sauce
-		 if (sauceObject !== undefined) {
-			CODE ICI
-		} */
 		const sauceObject = req.file
 			? {
 					...JSON.parse(req.body.sauce),
@@ -45,7 +64,7 @@ exports.modifySauce = async (req, res) => {
 		if (sauce.userId != req.auth.userId) {
 			res.status(403).json({ message: "Unauthorized request." });
 		} else {
-			if (sauceObject.imageUrl != null) {
+			if (sauce.imageUrl != (null || undefined)) {
 				const filename = sauce.imageUrl.split("images/")[1];
 				fs.unlink(`images/${filename}`, (err) => {
 					if (err) throw err;
@@ -56,7 +75,9 @@ exports.modifySauce = async (req, res) => {
 					...sauceObject,
 					_id: req.params.id,
 				}).exec();
-				res.status(200).json({ message: "Objet modifié!" });
+				res.status(200).json({
+					message: `La sauce ${sauce.name} ayant pour id ${sauce._id} a bien été modifiée !`,
+				});
 			} catch (err) {
 				res.status(401).json({ err });
 			}
@@ -66,7 +87,6 @@ exports.modifySauce = async (req, res) => {
 	}
 };
 
-// ES7
 exports.likeSauce = async (req, res) => {
 	try {
 		const sauce = await Sauce.findById(req.params.id).exec();
@@ -139,14 +159,14 @@ exports.likeSauce = async (req, res) => {
 				}
 				break;
 			default:
-				alert("Unknown sauce or user");
+				// Si avec Postman par exemple on entre un chiffre autre que 0, 1 ou -1 :
+				res.status(400).json({ message: "Requête incorrecte." });
 		}
 	} catch (err) {
 		res.status(404).json({ err });
 	}
 };
 
-//ES7
 exports.deleteSauce = async (req, res) => {
 	try {
 		const sauce = await Sauce.findById(req.params.id).exec();
@@ -158,35 +178,13 @@ exports.deleteSauce = async (req, res) => {
 				try {
 					await Sauce.findByIdAndDelete(req.params.id).exec();
 					res.status(200).json({
-						message: "Objet supprimé !",
+						message: `La sauce : ${sauce.name} a bien été supprimée !`,
 					});
 				} catch (err) {
 					res.status(401).json({ err });
 				}
 			});
 		}
-	} catch (err) {
-		res.status(404).json({ err });
-	}
-};
-
-// ES7
-exports.getOneSauce = async (req, res) => {
-	try {
-		const sauce = await Sauce.findById(req.params.id).exec(); // Appeler une query sans exec() ni une callback renverrai un thenable et non pas une promise.
-		res.status(200).json(sauce);
-	} catch (err) {
-		res.status(404).json({ err });
-	}
-};
-
-// ECMAScript7 (ES7 : 2016), toujours valable, async/await
-exports.getAllSauces = async (req, res) => {
-	try {
-		const sauces = await Sauce.find({})
-			//.select("imageUrl name heat mainPepper") // .select permet de ne charger que les propriétés précisées, ou inversement de ne pas charger "-propriété" (avec un - devant)
-			.exec();
-		res.status(200).json(sauces);
 	} catch (err) {
 		res.status(404).json({ err });
 	}

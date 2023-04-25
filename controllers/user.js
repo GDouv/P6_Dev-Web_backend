@@ -5,7 +5,7 @@ const cryptoJS = require("crypto-js");
 const User = require("../models/User");
 
 exports.signup = (req, res, next) => {
-	//chiffrement de l'email avant de l'envoyer dans la base de données
+	// Chiffrement de l'email avant de l'envoyer dans la base de données
 	const emailCryptoJS = cryptoJS.AES.encrypt(
 		req.body.email,
 		process.env.CRYPTOJS_EMAIL
@@ -31,8 +31,7 @@ exports.signup = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-	//chiffrement de l'email entré par l'utilisateur pour comparer le SHA avant la connexion
-	// Utiliser AES pour crypter l'email car c'est symétrique
+	// Chiffrement de l'email entré par l'utilisateur pour comparer le hash avant la connexion
 	const emailCryptoJS = cryptoJS.AES.encrypt(
 		req.body.email,
 		process.env.CRYPTOJS_EMAIL
@@ -64,7 +63,7 @@ exports.login = (req, res, next) => {
 						token: jwt.sign(
 							{ userId: user._id },
 							process.env.JWT_KEY,
-							{ expiresIn: "2h" }
+							{ expiresIn: `${process.env.TOKEN_VALIDITY_TIME}` }
 						),
 					});
 				})
